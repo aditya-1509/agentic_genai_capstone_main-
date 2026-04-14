@@ -121,3 +121,4 @@ gen_ai_capstone-main/
 - **4-layer domain scope guardrail** prevents any off-topic LLM responses
 - **Downloadable structured report** for audit trail
 - **Dual LLM strategy** — fast 8b classifier + powerful 70b reasoner
+# agentic_genai_capstone_main-
