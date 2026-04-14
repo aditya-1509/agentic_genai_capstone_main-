@@ -122,7 +122,6 @@ st.markdown("""
 <div class="header-bar">
     <div>
         <div class="header-title">Next-Gen Credit Intelligence: Agentic AI for Risk-Aware Lending</div>
-        <div class="header-sub">LangGraph Agent | Groq LLM | RAG | Multi-layer Guardrails</div>
     </div>
     <div class="header-badge">Agentic Workflow Active</div>
 </div>
