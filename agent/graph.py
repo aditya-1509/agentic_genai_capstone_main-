@@ -83,6 +83,8 @@ def run_ml_pipeline(raw_input: Dict[str, Any], borrower_name: str) -> Dict[str, 
     
     return {"domain_blocked": False, "structured_output": output}
 
+from langchain_community.tools import DuckDuckGoSearchRun
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. CONVERSATIONAL RAG AGENT
 # ─────────────────────────────────────────────────────────────────────────────
@@ -102,22 +104,24 @@ def search_web_tool(query: str) -> str:
         from langchain_community.tools import DuckDuckGoSearchRun
         runner = DuckDuckGoSearchRun()
         return runner.run(query)
-    except ImportError:
-        return "Web search is unavailable (duckduckgo-search package not installed)."
     except Exception as e:
         return f"Web search failed: {e}"
 
 SYSTEM_PROMPT = """You are an Intelligent Lending Decision Support Agent.
 You are engaged in a conversation with an underwriter to help them understand a borrower's risk profile.
-You have access to `search_regulations_tool` (primary RBI knowledge) and `search_web_tool` (fallback internet search).
+You have access to two tools:
+1. `search_regulations_tool`: primary RBI knowledge.
+2. `search_web_tool`: fallback internet search or for external trends.
+Use them actively!
 
 STRICT RULES:
 - Operate EXCLUSIVELY in the domain of credit risk, lending decisions, compliance, and financial underwriting.
 - If asked about topics outside of this, gracefully decline to answer.
-- Base your advice on the user's ML predictions provided in the chat context.
+- Base your advice on the user's ML predictions provided in the chat context, retrieved rules, and web search results when applicable.
 - ALWAYS try `search_regulations_tool` first for rule queries. Only use `search_web_tool` if the regulations tool returns no results.
 - Do NOT make definitive approve/reject actions (only advise).
 - When using tools, always use proper JSON format for function calls."""
 
-llm_smart = ChatGroq(model_name="llama-3.1-70b-versatile", api_key=_api_key, temperature=0)
+# We ensure the LLM here is one that strongly supports tool usage
+llm_smart = ChatGroq(model_name="llama-3.3-70b-versatile", api_key=_api_key, temperature=0.2)
 chat_agent = create_react_agent(llm_smart, tools=[search_regulations_tool, search_web_tool], prompt=SYSTEM_PROMPT)
