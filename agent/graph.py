@@ -6,6 +6,7 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 from langgraph.prebuilt import create_react_agent
 from langchain_core.tools import tool
+from langchain_community.tools import DuckDuckGoSearchRun
 
 from ml.predict import predict_risk
 from rag.retriever import get_relevant_regulations
@@ -94,15 +95,32 @@ def search_regulations_tool(query: str) -> str:
     docs, _ = get_relevant_regulations(query)
     return docs
 
+try:
+    web_search = DuckDuckGoSearchRun()
+except Exception:
+    web_search = None
+
+@tool
+def search_web_tool(query: str) -> str:
+    """Search the live internet for general credit risk information, news, or rules.
+    CRITICAL INSTRUCTION: Use this tool ONLY as a fallback if `search_regulations_tool` returns 'No regulatory guidelines found', or if the user explicitly asks for live web information."""
+    if not web_search:
+        return "Web search is currently unavailable."
+    try:
+        return web_search.run(query)
+    except Exception as e:
+        return f"Web search failed: {e}"
+
 SYSTEM_PROMPT = """You are an Intelligent Lending Decision Support Agent.
 You are engaged in a conversation with an underwriter to help them understand a borrower's risk profile.
-You have access to a tool `search_regulations_tool` to retrieve regulatory knowledge. Use it actively!
+You have access to `search_regulations_tool` (primary RBI knowledge) and `search_web_tool` (fallback internet search).
 
 STRICT RULES:
 - Operate EXCLUSIVELY in the domain of credit risk, lending decisions, compliance, and financial underwriting.
 - If asked about topics outside of this, gracefully decline to answer.
-- Base your advice on the user's ML predictions provided in the chat context and retrieved rules.
+- Base your advice on the user's ML predictions provided in the chat context.
+- ALWAYS try `search_regulations_tool` first for rule queries. Only use `search_web_tool` if the regulations tool fails or has no info.
 - Do NOT make definitive approve/reject actions (only advise)."""
 
 llm_smart = ChatGroq(model_name="llama-3.3-70b-versatile", api_key=_api_key, temperature=0.2)
-chat_agent = create_react_agent(llm_smart, tools=[search_regulations_tool], prompt=SYSTEM_PROMPT)
+chat_agent = create_react_agent(llm_smart, tools=[search_regulations_tool, search_web_tool], prompt=SYSTEM_PROMPT)
