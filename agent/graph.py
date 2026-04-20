@@ -115,8 +115,9 @@ STRICT RULES:
 - Operate EXCLUSIVELY in the domain of credit risk, lending decisions, compliance, and financial underwriting.
 - If asked about topics outside of this, gracefully decline to answer.
 - Base your advice on the user's ML predictions provided in the chat context.
-- ALWAYS try `search_regulations_tool` first for rule queries. Only use `search_web_tool` if the regulations tool fails or has no info.
-- Do NOT make definitive approve/reject actions (only advise)."""
+- ALWAYS try `search_regulations_tool` first for rule queries. Only use `search_web_tool` if the regulations tool returns no results.
+- Do NOT make definitive approve/reject actions (only advise).
+- When using tools, always use proper JSON format for function calls."""
 
-llm_smart = ChatGroq(model_name="llama3-groq-70b-8192-tool-use-preview", api_key=_api_key, temperature=0.2)
+llm_smart = ChatGroq(model_name="llama-3.1-70b-versatile", api_key=_api_key, temperature=0)
 chat_agent = create_react_agent(llm_smart, tools=[search_regulations_tool, search_web_tool], prompt=SYSTEM_PROMPT)
