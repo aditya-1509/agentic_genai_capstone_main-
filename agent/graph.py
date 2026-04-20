@@ -6,7 +6,6 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 from langgraph.prebuilt import create_react_agent
 from langchain_core.tools import tool
-from langchain_community.tools import DuckDuckGoSearchRun
 
 from ml.predict import predict_risk
 from rag.retriever import get_relevant_regulations
@@ -95,19 +94,16 @@ def search_regulations_tool(query: str) -> str:
     docs, _ = get_relevant_regulations(query)
     return docs
 
-try:
-    web_search = DuckDuckGoSearchRun()
-except Exception:
-    web_search = None
-
 @tool
 def search_web_tool(query: str) -> str:
     """Search the live internet for general credit risk information, news, or rules.
     CRITICAL INSTRUCTION: Use this tool ONLY as a fallback if `search_regulations_tool` returns 'No regulatory guidelines found', or if the user explicitly asks for live web information."""
-    if not web_search:
-        return "Web search is currently unavailable."
     try:
-        return web_search.run(query)
+        from langchain_community.tools import DuckDuckGoSearchRun
+        runner = DuckDuckGoSearchRun()
+        return runner.run(query)
+    except ImportError:
+        return "Web search is unavailable (duckduckgo-search package not installed)."
     except Exception as e:
         return f"Web search failed: {e}"
 

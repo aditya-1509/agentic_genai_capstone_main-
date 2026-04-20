@@ -190,8 +190,11 @@ with col_right:
                             
                             st.session_state["messages"].append(final_msg)
                         except Exception as e:
-                            st.error(f"Agent error: {e}")
-                    st.rerun()  # Forces layout reset
+                            import traceback
+                            st.error(f"Agent error [{type(e).__name__}]: {e}")
+                            st.code(traceback.format_exc(), language="python")
+                            st.session_state["messages"].pop()  # Remove the failed human message
+                    st.rerun()  # Always rerun to prevent UI freeze
                 
                 # Output existing chat messages (Newest Pair Top, Oldest Pair Bottom)
                 messages_list = st.session_state["messages"]
